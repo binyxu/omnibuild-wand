@@ -287,6 +287,12 @@ public class WorksiteBlockEntity {
             if (isFlowingFluid(bs)) continue;
             for (String key : depositKeys(bs)) needed.merge(key, 1, Integer::sum);
         }
+        capWaterBuckets();
+    }
+
+    /** 2 water source blocks make an infinite source, so any amount of water only costs 2 buckets. */
+    private void capWaterBuckets() {
+        needed.computeIfPresent("minecraft:water_bucket", (k, v) -> Math.min(2, v));
     }
 
     private void computeNeeded(ServerLevel level, BlockPos postPos) {
@@ -299,6 +305,7 @@ public class WorksiteBlockEntity {
             if (!canPlaceAt(bs, level.getBlockState(target))) continue;
             for (String key : depositKeys(bs)) needed.merge(key, 1, Integer::sum);
         }
+        capWaterBuckets();
     }
 
     // 鈹€鈹€ Material management 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
@@ -414,23 +421,25 @@ public class WorksiteBlockEntity {
         return pulled;
     }
 
-    /** Give every deposited material back to the player (overflow drops at the post). Clears deposited. */
-    public int withdrawToPlayer(Player player, ServerLevel level, BlockPos postPos) {
-        int total = 0;
-        for (Map.Entry<String, Integer> entry : new ArrayList<>(deposited.entrySet())) {
-            int count = entry.getValue();
-            if (count <= 0) continue;
-            Item item = itemForDepositId(entry.getKey());
-            if (item == null || item == Items.AIR) continue;
-            while (count > 0) {
-                int n = Math.min(count, item.getDefaultMaxStackSize());
-                ItemStack stack = new ItemStack(item, n);
-                if (!player.getInventory().add(stack)) Block.popResource(level, postPos, stack);
-                count -= n;
-                total += n;
-            }
+    /** Give one deposited material (by id) back to the player; overflow drops at the post. */
+    public int withdrawToPlayer(Player player, ServerLevel level, BlockPos postPos, String id) {
+        if (id == null || id.isBlank()) return 0;
+        int count = deposited.getOrDefault(id, 0);
+        if (count <= 0) return 0;
+        Item item = itemForDepositId(id);
+        if (item == null || item == Items.AIR) {
+            deposited.remove(id);
+            return 0;
         }
-        deposited.clear();
+        int total = 0;
+        while (count > 0) {
+            int n = Math.min(count, item.getDefaultMaxStackSize());
+            ItemStack stack = new ItemStack(item, n);
+            if (!player.getInventory().add(stack)) Block.popResource(level, postPos, stack);
+            count -= n;
+            total += n;
+        }
+        deposited.remove(id);
         return total;
     }
 
@@ -571,7 +580,7 @@ public class WorksiteBlockEntity {
      */
     public boolean placeNextBlock(ServerLevel level, BlockPos origin) {
         origin = buildOrigin(origin);
-        if (buildEntries.isEmpty() || remainingNeeded() <= 0) return true;
+        if (buildEntries.isEmpty() || completedOffsets.size() >= buildEntries.size()) return true;
 
         int checked = 0;
         while (checked < buildEntries.size()) {
@@ -611,9 +620,9 @@ public class WorksiteBlockEntity {
             level.sendParticles(ParticleTypes.CRIT,
                     target.getX() + 0.5, target.getY() + 1.0, target.getZ() + 0.5,
                     4, 0.3, 0.3, 0.3, 0.05);
-            return remainingNeeded() <= 0;
+            return completedOffsets.size() >= buildEntries.size();
         }
-        return remainingNeeded() <= 0;
+        return completedOffsets.size() >= buildEntries.size();
     }
     public int blocksPerSecond() {
         return Math.max(5, (int)Math.ceil(buildEntries.size() / 60.0));
@@ -642,7 +651,12 @@ public class WorksiteBlockEntity {
     }
 
     private void decrementNeeded(List<String> ids) {
-        for (String id : ids) decrementNeeded(id);
+        // Water is capped/infinite (see capWaterBuckets); keep its "need" steady so the
+        // dashboard stays sensible and the cap isn't decremented away.
+        for (String id : ids) {
+            if (id.equals("minecraft:water_bucket")) continue;
+            decrementNeeded(id);
+        }
     }
 
     private boolean hasDeposited(List<String> ids) {
@@ -654,6 +668,8 @@ public class WorksiteBlockEntity {
 
     private void consumeDeposited(List<String> ids) {
         for (String id : ids) {
+            // 2 water buckets = infinite water, so water is never consumed per block.
+            if (id.equals("minecraft:water_bucket")) continue;
             int n = deposited.getOrDefault(id, 0);
             if (n <= 1) deposited.remove(id);
             else deposited.put(id, n - 1);

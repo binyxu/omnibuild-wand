@@ -93,8 +93,8 @@ public class WorksiteScreen extends Screen {
 
         addRenderableWidget(Button.builder(
                 Component.translatable("screen.buildingwand.worksite.withdraw"),
-                btn -> ClientPlayNetworking.send(new WorksiteActionPayload(worksitePos, 4, ""))
-        ).bounds(cx + 4, byTop, 156, 20).build()).active = !building;
+                btn -> ClientPlayNetworking.send(new WorksiteActionPayload(worksitePos, 4, selectedMaterialId))
+        ).bounds(cx + 4, byTop, 156, 20).build()).active = !building && !selectedMaterialId.isEmpty();
 
         addRenderableWidget(Button.builder(
                 Component.translatable("screen.buildingwand.worksite.deposit"),

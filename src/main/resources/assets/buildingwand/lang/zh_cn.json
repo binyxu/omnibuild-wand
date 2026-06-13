@@ -101,6 +101,7 @@
   "tooltip.buildingwand.mode.supply": "\u4f9b\u6599\u94fe\u63a5\u6a21\u5f0f",
   "tooltip.buildingwand.supply.hint": "\u53f3\u952e\u6846\u9009\u4e24\u89d2\uff0c\u518d\u53f3\u952e\u5de5\u5730\u724c\uff0c\u628a\u533a\u57df\u5185\u7684\u7bb1\u5b50\u63a5\u5165\u5de5\u5730\u4f9b\u6599\u3002",
   "screen.buildingwand.worksite.pull": "\u4ece\u7bb1\u5b50\u8865\u6599",
-  "screen.buildingwand.worksite.withdraw": "\u53d6\u56de\u6750\u6599",
-  "message.buildingwand.worksite.withdraw_locked": "\u65bd\u5de5\u4e2d\u65e0\u6cd5\u53d6\u56de\u6750\u6599\u3002"
+  "screen.buildingwand.worksite.withdraw": "\u53d6\u56de\u9009\u4e2d",
+  "message.buildingwand.worksite.withdraw_locked": "\u65bd\u5de5\u4e2d\u65e0\u6cd5\u53d6\u56de\u6750\u6599\u3002",
+  "message.buildingwand.worksite.withdraw_select": "\u8bf7\u5148\u5728\u5217\u8868\u4e2d\u9009\u4e2d\u8981\u53d6\u56de\u7684\u6750\u6599\u3002"
 }

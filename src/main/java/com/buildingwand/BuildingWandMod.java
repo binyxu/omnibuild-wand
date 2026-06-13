@@ -99,8 +99,10 @@ public class BuildingWandMod implements ModInitializer {
                     } else if (payload.action() == 4) {
                         if (info.isBuilding()) {
                             player.sendSystemMessage(Component.translatable("message.buildingwand.worksite.withdraw_locked"));
+                        } else if (payload.materialId() == null || payload.materialId().isBlank()) {
+                            player.sendSystemMessage(Component.translatable("message.buildingwand.worksite.withdraw_select"));
                         } else {
-                            int withdrawn = info.withdrawToPlayer(player, serverLevel, pos);
+                            int withdrawn = info.withdrawToPlayer(player, serverLevel, pos, payload.materialId());
                             info.refreshDecoration(serverLevel, pos);
                             WorksiteManager.markDirty(serverLevel);
                             player.sendSystemMessage(Component.translatable("message.buildingwand.worksite.withdrawn", withdrawn));
