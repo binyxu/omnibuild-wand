@@ -3,6 +3,7 @@ package com.buildingwand.item;
 import com.buildingwand.BuildingWandConfig;
 import com.buildingwand.ModItems;
 import com.buildingwand.network.WandClipPayload;
+import com.buildingwand.worksite.WorksiteBlock;
 import com.buildingwand.worksite.WorksiteBlockEntity;
 import com.buildingwand.worksite.WorksiteManager;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -16,6 +17,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.Container;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -71,6 +73,9 @@ public class BuildingWandItem extends Item {
     public static final String K_OZ = "oz";
 
     public static final int MAX_BLOCKS = 10_000;
+    // Supply-link region scan limits (one-time scan at bind time).
+    private static final int MAX_SUPPLY_SCAN = 200_000;
+    private static final int MAX_SUPPLY_CONTAINERS = 512;
     private static final int MAX_SMART_SCAN = 40_000;
     private static final int MAX_PERSISTED_CLIP_BLOCKS = 1500;
     private static final int MAX_PERSISTED_SMART_BLOCKS = 512;
@@ -300,7 +305,7 @@ public class BuildingWandItem extends Item {
     }
 
     public static void serverToggleMode(ItemStack wand, Player player) {
-        int nm = (getMode(wand) + 1) % 4;
+        int nm = (getMode(wand) + 1) % 5;
         CompoundTag fresh = new CompoundTag();
         fresh.putInt(K_MODE, nm);
         fresh.putInt(K_SEL, getSel(wand));
@@ -310,7 +315,8 @@ public class BuildingWandItem extends Item {
             case 0 -> Component.translatable("message.buildingwand.mode.fill").withStyle(ChatFormatting.GREEN);
             case 1 -> Component.translatable("message.buildingwand.mode.copy").withStyle(ChatFormatting.AQUA);
             case 2 -> Component.translatable("message.buildingwand.mode.replace").withStyle(ChatFormatting.LIGHT_PURPLE);
-            default -> Component.translatable("message.buildingwand.mode.move").withStyle(ChatFormatting.YELLOW);
+            case 3 -> Component.translatable("message.buildingwand.mode.move").withStyle(ChatFormatting.YELLOW);
+            default -> Component.translatable("message.buildingwand.mode.supply").withStyle(ChatFormatting.GOLD);
         }));
     }
 
@@ -354,7 +360,8 @@ public class BuildingWandItem extends Item {
         if (mode == 0) fillModeClick(player, wand, clicked, step, level);
         else if (mode == 1) copyPasteModeClick(player, wand, clicked, face, step, level);
         else if (mode == 2) replaceModeClick(player, wand, clicked, step, level);
-        else moveModeClick(player, wand, clicked, face, step, level);
+        else if (mode == 3) moveModeClick(player, wand, clicked, face, step, level);
+        else supplyLinkModeClick(player, wand, clicked, step, level);
         return InteractionResult.SUCCESS;
     }
 
@@ -632,6 +639,59 @@ public class BuildingWandItem extends Item {
         } else {
             doMove(player, wand, level, placementTarget(clicked, face));
         }
+    }
+
+    private void supplyLinkModeClick(Player player, ItemStack wand, BlockPos clicked, int step, Level level) {
+        if (step == 0) {
+            setPos1(wand, clicked);
+            setField(wand, K_STEP, 1);
+            player.sendSystemMessage(Component.translatable("message.buildingwand.supply.corner1", fmt(clicked)));
+        } else if (step == 1) {
+            setPos2(wand, clicked);
+            setField(wand, K_STEP, 2);
+            player.sendSystemMessage(Component.translatable("message.buildingwand.supply.range_ready"));
+        } else {
+            if (!(level.getBlockState(clicked).getBlock() instanceof WorksiteBlock)
+                    || !(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
+                player.sendSystemMessage(Component.translatable("message.buildingwand.supply.need_post"));
+                return;
+            }
+            WorksiteBlockEntity info = WorksiteManager.get(serverLevel, clicked);
+            if (info == null) {
+                player.sendSystemMessage(Component.translatable("message.buildingwand.worksite.missing_data"));
+                return;
+            }
+            List<BlockPos> containers = scanContainers(serverLevel, getPos1(wand), getPos2(wand));
+            if (containers == null) {
+                player.sendSystemMessage(Component.translatable("message.buildingwand.region_too_large_max", MAX_SUPPLY_SCAN));
+                return;
+            }
+            if (containers.isEmpty()) {
+                player.sendSystemMessage(Component.translatable("message.buildingwand.supply.no_containers"));
+                resetStep(wand);
+                return;
+            }
+            info.setSupplyContainers(containers);
+            WorksiteManager.markDirty(serverLevel);
+            resetStep(wand);
+            player.sendSystemMessage(Component.translatable("message.buildingwand.supply.linked", containers.size()));
+        }
+    }
+
+    private List<BlockPos> scanContainers(net.minecraft.server.level.ServerLevel level, BlockPos a, BlockPos b) {
+        if (calcVol(a, b) > MAX_SUPPLY_SCAN) return null;
+        int x1 = Math.min(a.getX(), b.getX()), x2 = Math.max(a.getX(), b.getX());
+        int y1 = Math.min(a.getY(), b.getY()), y2 = Math.max(a.getY(), b.getY());
+        int z1 = Math.min(a.getZ(), b.getZ()), z2 = Math.max(a.getZ(), b.getZ());
+        List<BlockPos> out = new ArrayList<>();
+        for (int x = x1; x <= x2; x++) for (int y = y1; y <= y2; y++) for (int z = z1; z <= z2; z++) {
+            BlockPos pos = new BlockPos(x, y, z);
+            if (level.getBlockEntity(pos) instanceof Container) {
+                out.add(pos.immutable());
+                if (out.size() >= MAX_SUPPLY_CONTAINERS) return out;
+            }
+        }
+        return out;
     }
 
     private void copyPasteModeClick(Player player, ItemStack wand, BlockPos clicked, Direction face, int step, Level level) {
@@ -1181,9 +1241,12 @@ public class BuildingWandItem extends Item {
          } else if (mode == 2) {
             tips.accept(Component.translatable("tooltip.buildingwand.mode.replace").withStyle(ChatFormatting.ITALIC));
             tips.accept(Component.translatable("tooltip.buildingwand.replace.hint").withStyle(ChatFormatting.ITALIC));
-         } else {
+         } else if (mode == 3) {
             tips.accept(Component.translatable("tooltip.buildingwand.mode.move").withStyle(ChatFormatting.ITALIC));
             tips.accept(Component.translatable("tooltip.buildingwand.move.hint").withStyle(ChatFormatting.ITALIC));
+         } else {
+            tips.accept(Component.translatable("tooltip.buildingwand.mode.supply").withStyle(ChatFormatting.ITALIC));
+            tips.accept(Component.translatable("tooltip.buildingwand.supply.hint").withStyle(ChatFormatting.ITALIC));
         }
         tips.accept(Component.translatable("tooltip.buildingwand.common.controls").withStyle(ChatFormatting.ITALIC));
     }

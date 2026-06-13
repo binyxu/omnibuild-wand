@@ -32,7 +32,7 @@ public class WorksiteScreen extends Screen {
     private final List<String> materialLines = new ArrayList<>();
 
     private static final int BG_WIDTH = 340;
-    private static final int BG_HEIGHT = 232;
+    private static final int BG_HEIGHT = 258;
     private static final int LINE_H = 12;
     private static final int MAX_VISIBLE = 11;
 
@@ -72,6 +72,7 @@ public class WorksiteScreen extends Screen {
         int x0 = (width - BG_WIDTH) / 2;
         int y0 = (height - BG_HEIGHT) / 2;
         int by = y0 + BG_HEIGHT - 28;
+        int byTop = by - 24;
 
         if (materialLines.size() > MAX_VISIBLE) {
             int scrollBtnX = x0 + BG_WIDTH - 20;
@@ -83,6 +84,17 @@ public class WorksiteScreen extends Screen {
                     btn -> { if (scrollOffset < materialLines.size() - MAX_VISIBLE) scrollOffset++; }
             ).bounds(scrollBtnX, listTop + MAX_VISIBLE * LINE_H - 10, 16, 10).build());
         }
+
+        // Top row: pull from linked chests + withdraw deposited materials.
+        addRenderableWidget(Button.builder(
+                Component.translatable("screen.buildingwand.worksite.pull"),
+                btn -> ClientPlayNetworking.send(new WorksiteActionPayload(worksitePos, 3, ""))
+        ).bounds(cx - 160, byTop, 156, 20).build());
+
+        addRenderableWidget(Button.builder(
+                Component.translatable("screen.buildingwand.worksite.withdraw"),
+                btn -> ClientPlayNetworking.send(new WorksiteActionPayload(worksitePos, 4, ""))
+        ).bounds(cx + 4, byTop, 156, 20).build()).active = !building;
 
         addRenderableWidget(Button.builder(
                 Component.translatable("screen.buildingwand.worksite.deposit"),
@@ -171,7 +183,7 @@ public class WorksiteScreen extends Screen {
 
         if (!selectedMaterialId.isEmpty()) {
             String shortId = selectedMaterialId.contains(":") ? selectedMaterialId.split(":")[1] : selectedMaterialId;
-            g.text(font, Component.translatable("screen.buildingwand.worksite.selected", shortId).withStyle(ChatFormatting.GRAY), x0 + 8, y0 + BG_HEIGHT - 42, -1);
+            g.text(font, Component.translatable("screen.buildingwand.worksite.selected", shortId).withStyle(ChatFormatting.GRAY), x0 + 8, y0 + BG_HEIGHT - 82, -1);
         }
 
         super.extractRenderState(g, mouseX, mouseY, delta);

@@ -88,5 +88,19 @@
   "screen.buildingwand.worksite.deposited": "\u5df2\u6295",
   "screen.buildingwand.worksite.missing": "\u7f3a\u5c11",
   "screen.buildingwand.worksite.selected": "\u5df2\u9009: %s",
-  "screen.buildingwand.worksite.done": "\u5b8c\u6210"
+  "screen.buildingwand.worksite.done": "\u5b8c\u6210",
+  "message.buildingwand.mode.supply": "\u4f9b\u6599\u94fe\u63a5\u6a21\u5f0f",
+  "message.buildingwand.supply.corner1": "[\u4f9b\u6599] \u89d2\u843d1 -> %s | \u518d\u6b21\u53f3\u952e\u9009\u89d2\u843d",
+  "message.buildingwand.supply.range_ready": "[\u4f9b\u6599] \u533a\u57df\u5df2\u9009\u5b9a | \u53f3\u952e\u5de5\u5730\u724c\u5b8c\u6210\u94fe\u63a5",
+  "message.buildingwand.supply.need_post": "\u8bf7\u53f3\u952e\u4e00\u4e2a\u5de5\u5730\u724c\u6765\u5b8c\u6210\u94fe\u63a5\u3002",
+  "message.buildingwand.supply.no_containers": "\u9009\u533a\u5185\u6ca1\u6709\u53ef\u7528\u7684\u5bb9\u5668\uff08\u7bb1\u5b50/\u6728\u6876/\u6f5c\u5f71\u76d2\uff09\u3002",
+  "message.buildingwand.supply.linked": "\u5df2\u94fe\u63a5 %s \u4e2a\u5bb9\u5668\u5230\u5de5\u5730\uff01\u65bd\u5de5\u65f6\u4f1a\u81ea\u52a8\u53d6\u6599\u3002",
+  "message.buildingwand.supply.none_linked": "\u8be5\u5de5\u5730\u8fd8\u6ca1\u6709\u94fe\u63a5\u7bb1\u5b50\u3002\u8bf7\u7528\u4f9b\u6599\u94fe\u63a5\u6a21\u5f0f\u6846\u9009\u7bb1\u5b50\u533a\u57df\u5e76\u53f3\u952e\u5de5\u5730\u724c\u3002",
+  "message.buildingwand.supply.pulled": "\u5df2\u4ece\u7bb1\u5b50\u53d6\u5f97 %s \u4e2a\u6750\u6599\u3002",
+  "message.buildingwand.worksite.withdrawn": "\u5df2\u53d6\u56de %s \u4e2a\u6750\u6599\u3002",
+  "tooltip.buildingwand.mode.supply": "\u4f9b\u6599\u94fe\u63a5\u6a21\u5f0f",
+  "tooltip.buildingwand.supply.hint": "\u53f3\u952e\u6846\u9009\u4e24\u89d2\uff0c\u518d\u53f3\u952e\u5de5\u5730\u724c\uff0c\u628a\u533a\u57df\u5185\u7684\u7bb1\u5b50\u63a5\u5165\u5de5\u5730\u4f9b\u6599\u3002",
+  "screen.buildingwand.worksite.pull": "\u4ece\u7bb1\u5b50\u8865\u6599",
+  "screen.buildingwand.worksite.withdraw": "\u53d6\u56de\u6750\u6599",
+  "message.buildingwand.worksite.withdraw_locked": "\u65bd\u5de5\u4e2d\u65e0\u6cd5\u53d6\u56de\u6750\u6599\u3002"
 }

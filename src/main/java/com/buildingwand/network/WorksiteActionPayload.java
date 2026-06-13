@@ -6,7 +6,8 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
-/** C2S: player pressed a worksite button. action 0=deposit-all, 1=start-build, 2=replace-material. */
+/** C2S: player pressed a worksite button. action 0=deposit-all, 1=start-build, 2=replace-material,
+ *  3=pull-from-linked-chests, 4=withdraw-deposited. */
 public record WorksiteActionPayload(BlockPos pos, int action, String materialId) implements CustomPacketPayload {
 
     public static final Type<WorksiteActionPayload> TYPE =

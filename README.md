@@ -41,7 +41,7 @@ B · ·
 ## 🎮 基础概念
 
 - **手持手杖右键**＝选角 / 执行操作。大多数操作是「右键选第一个角 → 再右键选第二个角 → 完成」。
-- 按 **`N`** 在四种模式间循环切换：**填充 → 复制/粘贴 → 替换 → 移动**。
+- 按 **`N`** 在五种模式间循环切换：**填充 → 复制/粘贴 → 替换 → 移动 → 供料链接**。
 - 按 **`V`** 在 **方形选区 ↔ 智能选区** 间切换。
 - **`Shift` + 右键**＝重置当前选区，重新开始。
 - 生存模式会**真实扣除背包材料**（可从快捷栏或副手的**潜影盒**里取）；材料不够时可改用「工地」慢慢囤料建造（见下文）。
@@ -116,6 +116,19 @@ B · ·
 
    ![自动建造中](docs/images/worksite-building.png)
 
+> 管理站还有两个按钮：**「取回材料」**把已存入工地的材料退回背包（施工中不可用）；**「从箱子补料」**配合下面的「供料链接」一键补料。
+
+## 🔗 供料链接 Supply Link（接箱子自动供料）
+
+懒得手动往工地搬材料？把附近的箱子接上，工地施工时**自动取料**。
+
+1. 按 `N` 切到 **供料链接** 模式。
+2. 右键框选两个角，把装材料的**箱子 / 木桶 / 潜影盒**圈进去（**箱子里的潜影盒也算**）。
+3. 再**右键工地牌**完成链接，提示「已链接 N 个容器」。
+4. 在管理站点 **「从箱子补料」**，或直接**开始施工**——施工时每秒自动从这些容器取料边抽边盖。
+
+> 🛡️ 安全机制：每个容器、每种材料**至少保留 1 个**，绝不把箱子抽空。
+
 ## 📐 Litematica 蓝图导入
 
 把外部 `.litematic` 蓝图直接变成工地来施工：
@@ -133,7 +146,7 @@ B · ·
 | `Shift` + 右键 | 重置选区 |
 | `R` | 旋转 |
 | `B` | 镜像 |
-| `N` | 切换模式 |
+| `N` | 切换模式（填充/复制/替换/移动/供料链接） |
 | `V` | 方形 / 智能选区 切换 |
 | `/wand settings` | 打开设置（智能选区上限） |
 | `/wand load <path>` | 加载 Litematica 蓝图 |
@@ -168,7 +181,7 @@ B · ·
 ## 🎮 Core concepts
 
 - **Right-click with the wand** = pick a corner / execute. Most actions are *right-click corner 1 → right-click corner 2 → done*.
-- Press **`N`** to cycle the four modes: **Fill → Copy/Paste → Replace → Move**.
+- Press **`N`** to cycle the five modes: **Fill → Copy/Paste → Replace → Move → Supply Link**.
 - Press **`V`** to toggle **Box ↔ Smart Selection**.
 - **`Shift` + Right-click** = reset the current selection.
 - In Survival it **actually consumes materials** from your hotbar/offhand (including **shulker boxes**). Short on materials? Build it as a *worksite* instead (see below).
@@ -243,6 +256,19 @@ Big project, don't want to drain your whole inventory at once? Turn it into a *w
 
    ![Auto-building](docs/images/worksite-building.png)
 
+> The dashboard also has two buttons: **Withdraw Materials** returns deposited materials to your inventory (disabled while building); **Pull from Chests** works with Supply Link below.
+
+## 🔗 Supply Link (auto-feed from chests)
+
+Don't want to haul materials to the worksite by hand? Link nearby chests and it **pulls materials automatically** while building.
+
+1. Press `N` to switch to **Supply Link** mode.
+2. Right-click two corners around your **chests / barrels / shulker boxes** (shulker boxes *inside* chests count too).
+3. Then **right-click the worksite post** to link — it reports "Linked N containers".
+4. Click **Pull from Chests** in the dashboard, or just **Start Construction** — it pulls from those containers every second as it builds.
+
+> 🛡️ Safety: each container always keeps **at least one** of every material — chests are never fully emptied.
+
 ## 📐 Litematica Blueprint Import
 
 Turn an external `.litematic` schematic straight into a worksite:
@@ -260,7 +286,7 @@ Turn an external `.litematic` schematic straight into a worksite:
 | `Shift` + Right-click | Reset selection |
 | `R` | Rotate |
 | `B` | Flip |
-| `N` | Switch mode |
+| `N` | Switch mode (Fill/Copy/Replace/Move/Supply Link) |
 | `V` | Toggle Box / Smart Selection |
 | `/wand settings` | Open settings (Smart Selection limits) |
 | `/wand load <path>` | Load a Litematica schematic |

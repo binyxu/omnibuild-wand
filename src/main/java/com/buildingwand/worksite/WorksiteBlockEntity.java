@@ -12,14 +12,20 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.FlowerPotBlock;
 import net.minecraft.world.level.block.BaseTorchBlock;
 import net.minecraft.world.level.block.CactusBlock;
@@ -62,6 +68,8 @@ public class WorksiteBlockEntity {
     private final List<BlockPos> decorationOffsets = new ArrayList<>();
     private final Map<String, Integer> needed   = new LinkedHashMap<>();
     private final Map<String, Integer> deposited = new LinkedHashMap<>();
+    // Absolute world positions of containers linked as material supply (chests/barrels/shulkers).
+    private final List<BlockPos> supplyContainers = new ArrayList<>();
     private boolean building   = false;
     private int     buildIndex = 0;
     private final ResourceKey<Level> dimension;
@@ -148,6 +156,7 @@ public class WorksiteBlockEntity {
         tag.put("decor", decor);
         tag.put("needed", saveIntMap(needed));
         tag.put("deposited", saveIntMap(deposited));
+        tag.putLongArray("supply", supplyContainers.stream().mapToLong(BlockPos::asLong).toArray());
         return tag;
     }
 
@@ -179,7 +188,7 @@ public class WorksiteBlockEntity {
             decor.add(new BlockPos(e.getIntOr("x", 0), e.getIntOr("y", 0), e.getIntOr("z", 0)));
         }
 
-        return new WorksiteBlockEntity(
+        WorksiteBlockEntity be = new WorksiteBlockEntity(
                 entries,
                 completed,
                 decor,
@@ -189,6 +198,8 @@ public class WorksiteBlockEntity {
                 tag.getIntOr("buildIndex", 0),
                 dimension,
                 origin);
+        for (long v : tag.getLongArray("supply").orElse(new long[0])) be.supplyContainers.add(BlockPos.of(v));
+        return be;
     }
 
     private static ListTag saveIntMap(Map<String, Integer> map) {
@@ -361,6 +372,131 @@ public class WorksiteBlockEntity {
         cleanupDecoration(level, postPos);
         dropDeposited(level, postPos);
         deposited.clear();
+    }
+
+    // 鈹€鈹€ Supply containers + withdraw 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+
+    public void setSupplyContainers(List<BlockPos> positions) {
+        supplyContainers.clear();
+        supplyContainers.addAll(positions);
+    }
+
+    public boolean hasSupply() {
+        return !supplyContainers.isEmpty();
+    }
+
+    /**
+     * Pull still-needed materials out of the linked containers (and shulker boxes inside them)
+     * into the worksite's deposited pool. Returns the number of items pulled.
+     */
+    public int pullFromContainers(ServerLevel level, BlockPos postPos) {
+        if (supplyContainers.isEmpty() || needed.isEmpty()) return 0;
+        int pulled = 0;
+        for (Map.Entry<String, Integer> req : needed.entrySet()) {
+            String id = req.getKey();
+            // Buckets are handled via the player deposit flow (empty bucket return); skip here.
+            if (id.endsWith("_bucket")) continue;
+            int gap = req.getValue() - deposited.getOrDefault(id, 0);
+            if (gap <= 0) continue;
+            Item target = itemForDepositId(id);
+            if (target == null || target == Items.AIR) continue;
+            for (BlockPos cpos : supplyContainers) {
+                if (gap <= 0) break;
+                if (!(level.getBlockEntity(cpos) instanceof Container container)) continue;
+                int took = takeFromContainer(container, target, gap);
+                if (took > 0) {
+                    deposited.merge(id, took, Integer::sum);
+                    gap -= took;
+                    pulled += took;
+                }
+            }
+        }
+        return pulled;
+    }
+
+    /** Give every deposited material back to the player (overflow drops at the post). Clears deposited. */
+    public int withdrawToPlayer(Player player, ServerLevel level, BlockPos postPos) {
+        int total = 0;
+        for (Map.Entry<String, Integer> entry : new ArrayList<>(deposited.entrySet())) {
+            int count = entry.getValue();
+            if (count <= 0) continue;
+            Item item = itemForDepositId(entry.getKey());
+            if (item == null || item == Items.AIR) continue;
+            while (count > 0) {
+                int n = Math.min(count, item.getDefaultMaxStackSize());
+                ItemStack stack = new ItemStack(item, n);
+                if (!player.getInventory().add(stack)) Block.popResource(level, postPos, stack);
+                count -= n;
+                total += n;
+            }
+        }
+        deposited.clear();
+        return total;
+    }
+
+    private static int takeFromContainer(Container container, Item target, int max) {
+        if (max <= 0) return 0;
+        int taken = 0;
+
+        // Loose stacks of the target: always leave at least one behind in this container.
+        int looseTotal = 0;
+        for (int i = 0; i < container.getContainerSize(); i++) {
+            ItemStack stack = container.getItem(i);
+            if (!stack.isEmpty() && stack.is(target)) looseTotal += stack.getCount();
+        }
+        int looseToTake = Math.min(max, Math.max(0, looseTotal - 1));
+        for (int i = 0; i < container.getContainerSize() && looseToTake > 0; i++) {
+            ItemStack stack = container.getItem(i);
+            if (stack.isEmpty() || !stack.is(target)) continue;
+            int n = Math.min(looseToTake, stack.getCount());
+            container.removeItem(i, n);
+            taken += n;
+            looseToTake -= n;
+        }
+
+        // Shulker boxes inside the container: each one also keeps at least one behind.
+        for (int i = 0; i < container.getContainerSize() && taken < max; i++) {
+            ItemStack stack = container.getItem(i);
+            if (!isShulkerItem(stack)) continue;
+            int n = takeFromShulkerItem(stack, target, max - taken);
+            if (n > 0) {
+                taken += n;
+                container.setChanged();
+            }
+        }
+        return taken;
+    }
+
+    private static boolean isShulkerItem(ItemStack stack) {
+        return !stack.isEmpty() && stack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof ShulkerBoxBlock;
+    }
+
+    private static int takeFromShulkerItem(ItemStack shulker, Item target, int max) {
+        if (max <= 0) return 0;
+        ItemContainerContents contents = shulker.get(DataComponents.CONTAINER);
+        if (contents == null) return 0;
+        NonNullList<ItemStack> slots = NonNullList.withSize(27, ItemStack.EMPTY);
+        contents.copyInto(slots);
+
+        int total = 0;
+        for (ItemStack stack : slots) {
+            if (!stack.isEmpty() && stack.is(target)) total += stack.getCount();
+        }
+        // Always leave at least one of the target inside the shulker box.
+        int toTake = Math.min(max, Math.max(0, total - 1));
+        if (toTake <= 0) return 0;
+
+        int taken = 0;
+        for (ItemStack stack : slots) {
+            if (taken >= toTake) break;
+            if (!stack.isEmpty() && stack.is(target)) {
+                int n = Math.min(toTake - taken, stack.getCount());
+                stack.shrink(n);
+                taken += n;
+            }
+        }
+        if (taken > 0) shulker.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(slots));
+        return taken;
     }
 
     public boolean replaceMaterial(ServerLevel level, BlockPos postPos, String sourceId, BlockState replacement) {
@@ -648,8 +784,14 @@ public class WorksiteBlockEntity {
 
     private static Item itemForDepositId(String id) {
         try {
-            return BuiltInRegistries.ITEM.get(Identifier.parse(id))
-                    .map(ref -> ref.value()).orElse(null);
+            Identifier key = Identifier.parse(id);
+            Item item = BuiltInRegistries.ITEM.get(key).map(ref -> ref.value()).orElse(null);
+            if (item != null && item != Items.AIR) return item;
+            // Deposit keys are block ids; some blocks have a different item id (e.g. redstone_wire
+            // -> redstone, wheat -> wheat). Fall back to the block's own item.
+            Block block = BuiltInRegistries.BLOCK.get(key).map(ref -> ref.value()).orElse(null);
+            if (block != null && block.asItem() != Items.AIR) return block.asItem();
+            return item;
         } catch (Exception ex) {
             return null;
         }

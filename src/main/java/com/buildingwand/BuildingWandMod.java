@@ -87,6 +87,24 @@ public class BuildingWandMod implements ModInitializer {
                         } else {
                             player.sendSystemMessage(Component.translatable("message.buildingwand.worksite.replace_failed"));
                         }
+                    } else if (payload.action() == 3) {
+                        if (!info.hasSupply()) {
+                            player.sendSystemMessage(Component.translatable("message.buildingwand.supply.none_linked"));
+                        } else {
+                            int pulled = info.pullFromContainers(serverLevel, pos);
+                            info.refreshDecoration(serverLevel, pos);
+                            WorksiteManager.markDirty(serverLevel);
+                            player.sendSystemMessage(Component.translatable("message.buildingwand.supply.pulled", pulled));
+                        }
+                    } else if (payload.action() == 4) {
+                        if (info.isBuilding()) {
+                            player.sendSystemMessage(Component.translatable("message.buildingwand.worksite.withdraw_locked"));
+                        } else {
+                            int withdrawn = info.withdrawToPlayer(player, serverLevel, pos);
+                            info.refreshDecoration(serverLevel, pos);
+                            WorksiteManager.markDirty(serverLevel);
+                            player.sendSystemMessage(Component.translatable("message.buildingwand.worksite.withdrawn", withdrawn));
+                        }
                     }
 
                     ServerPlayNetworking.send(player, new WorksiteOpenPayload(

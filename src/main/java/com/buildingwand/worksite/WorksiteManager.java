@@ -74,6 +74,9 @@ public class WorksiteManager {
             ServerLevel level = server.getLevel(dim);
             if (level == null) continue;
 
+            // Top up from linked supply containers before laying this second's blocks.
+            if (info.hasSupply() && info.pullFromContainers(level, postPos) > 0) dirty = true;
+
             boolean finished = false;
             int blocksThisSecond = info.blocksPerSecond();
             for (int i = 0; i < blocksThisSecond; i++) {
