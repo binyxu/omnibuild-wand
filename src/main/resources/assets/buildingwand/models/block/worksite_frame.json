@@ -1,0 +1,97 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "wood": "minecraft:block/stripped_bamboo_block",
+    "yellow": "minecraft:block/yellow_concrete",
+    "black": "minecraft:block/black_concrete",
+    "red": "minecraft:block/red_concrete",
+    "white": "minecraft:block/white_concrete",
+    "particle": "minecraft:block/yellow_concrete"
+  },
+  "elements": [
+    {
+      "comment": "left support post",
+      "from": [1, 0, 7],
+      "to": [3, 16, 9],
+      "faces": {
+        "north": { "uv": [1, 0, 3, 16], "texture": "#wood" },
+        "south": { "uv": [1, 0, 3, 16], "texture": "#wood" },
+        "east": { "uv": [7, 0, 9, 16], "texture": "#wood" },
+        "west": { "uv": [7, 0, 9, 16], "texture": "#wood" },
+        "up": { "uv": [1, 7, 3, 9], "texture": "#wood" }
+      }
+    },
+    {
+      "comment": "right support post",
+      "from": [13, 0, 7],
+      "to": [15, 16, 9],
+      "faces": {
+        "north": { "uv": [13, 0, 15, 16], "texture": "#wood" },
+        "south": { "uv": [13, 0, 15, 16], "texture": "#wood" },
+        "east": { "uv": [7, 0, 9, 16], "texture": "#wood" },
+        "west": { "uv": [7, 0, 9, 16], "texture": "#wood" },
+        "up": { "uv": [13, 7, 15, 9], "texture": "#wood" }
+      }
+    },
+    {
+      "comment": "upper warning board",
+      "from": [2, 10, 6],
+      "to": [14, 14, 8],
+      "faces": {
+        "north": { "uv": [2, 2, 14, 6], "texture": "#yellow" },
+        "south": { "uv": [2, 2, 14, 6], "texture": "#yellow" },
+        "up": { "uv": [2, 6, 14, 8], "texture": "#yellow" },
+        "down": { "uv": [2, 8, 14, 10], "texture": "#yellow" }
+      }
+    },
+    {
+      "comment": "lower warning board",
+      "from": [2, 4, 6],
+      "to": [14, 8, 8],
+      "faces": {
+        "north": { "uv": [2, 8, 14, 12], "texture": "#yellow" },
+        "south": { "uv": [2, 8, 14, 12], "texture": "#yellow" },
+        "up": { "uv": [2, 6, 14, 8], "texture": "#yellow" },
+        "down": { "uv": [2, 8, 14, 10], "texture": "#yellow" }
+      }
+    },
+    {
+      "comment": "black hazard stripe",
+      "from": [4, 10.2, 5.8],
+      "to": [6, 13.8, 6.2],
+      "rotation": { "origin": [5, 12, 6], "axis": "z", "angle": -22.5 },
+      "faces": {
+        "north": { "uv": [4, 2, 6, 6], "texture": "#black" },
+        "south": { "uv": [4, 2, 6, 6], "texture": "#black" }
+      }
+    },
+    {
+      "comment": "black hazard stripe",
+      "from": [8, 10.2, 5.8],
+      "to": [10, 13.8, 6.2],
+      "rotation": { "origin": [9, 12, 6], "axis": "z", "angle": -22.5 },
+      "faces": {
+        "north": { "uv": [8, 2, 10, 6], "texture": "#black" },
+        "south": { "uv": [8, 2, 10, 6], "texture": "#black" }
+      }
+    },
+    {
+      "comment": "warning sign plate",
+      "from": [5, 4.4, 5.7],
+      "to": [11, 7.6, 6.1],
+      "faces": {
+        "north": { "uv": [5, 8, 11, 12], "texture": "#white" },
+        "south": { "uv": [5, 8, 11, 12], "texture": "#white" }
+      }
+    },
+    {
+      "comment": "red warning mark",
+      "from": [7.2, 4.8, 5.5],
+      "to": [8.8, 7.2, 5.9],
+      "faces": {
+        "north": { "uv": [7, 9, 9, 11], "texture": "#red" },
+        "south": { "uv": [7, 9, 9, 11], "texture": "#red" }
+      }
+    }
+  ]
+}

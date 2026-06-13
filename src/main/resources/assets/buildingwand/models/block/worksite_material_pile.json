@@ -1,0 +1,106 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "wood": "minecraft:block/oak_planks",
+    "dark_wood": "minecraft:block/spruce_planks",
+    "stone": "minecraft:block/cobblestone",
+    "brick": "minecraft:block/bricks",
+    "tarp": "minecraft:block/blue_wool",
+    "strap": "minecraft:block/black_concrete",
+    "label": "minecraft:block/white_concrete",
+    "particle": "minecraft:block/oak_planks"
+  },
+  "elements": [
+    {
+      "comment": "wooden pallet slat",
+      "from": [1, 0, 1],
+      "to": [15, 1, 3],
+      "faces": {
+        "north": { "uv": [1, 15, 15, 16], "texture": "#dark_wood" },
+        "south": { "uv": [1, 15, 15, 16], "texture": "#dark_wood" },
+        "east": { "uv": [1, 15, 3, 16], "texture": "#dark_wood" },
+        "west": { "uv": [1, 15, 3, 16], "texture": "#dark_wood" },
+        "up": { "uv": [1, 1, 15, 3], "texture": "#dark_wood" }
+      }
+    },
+    {
+      "comment": "wooden pallet slat",
+      "from": [1, 0, 7],
+      "to": [15, 1, 9],
+      "faces": {
+        "north": { "uv": [1, 15, 15, 16], "texture": "#dark_wood" },
+        "south": { "uv": [1, 15, 15, 16], "texture": "#dark_wood" },
+        "east": { "uv": [7, 15, 9, 16], "texture": "#dark_wood" },
+        "west": { "uv": [7, 15, 9, 16], "texture": "#dark_wood" },
+        "up": { "uv": [1, 7, 15, 9], "texture": "#dark_wood" }
+      }
+    },
+    {
+      "comment": "brick stack",
+      "from": [2, 1, 2],
+      "to": [8, 7, 8],
+      "faces": {
+        "north": { "uv": [2, 9, 8, 15], "texture": "#brick" },
+        "south": { "uv": [2, 9, 8, 15], "texture": "#brick" },
+        "east": { "uv": [2, 9, 8, 15], "texture": "#brick" },
+        "west": { "uv": [2, 9, 8, 15], "texture": "#brick" },
+        "up": { "uv": [2, 2, 8, 8], "texture": "#brick" }
+      }
+    },
+    {
+      "comment": "crate",
+      "from": [8, 1, 3],
+      "to": [14, 8, 9],
+      "faces": {
+        "north": { "uv": [8, 8, 14, 15], "texture": "#wood" },
+        "south": { "uv": [8, 8, 14, 15], "texture": "#wood" },
+        "east": { "uv": [3, 8, 9, 15], "texture": "#wood" },
+        "west": { "uv": [3, 8, 9, 15], "texture": "#wood" },
+        "up": { "uv": [8, 3, 14, 9], "texture": "#wood" }
+      }
+    },
+    {
+      "comment": "white label on crate",
+      "from": [10, 3, 2.8],
+      "to": [13, 6, 3.2],
+      "faces": {
+        "north": { "uv": [10, 10, 13, 13], "texture": "#label" },
+        "south": { "uv": [10, 10, 13, 13], "texture": "#label" }
+      }
+    },
+    {
+      "comment": "covered material bundle",
+      "from": [4, 7, 5],
+      "to": [12, 11, 13],
+      "faces": {
+        "north": { "uv": [4, 5, 12, 9], "texture": "#tarp" },
+        "south": { "uv": [4, 5, 12, 9], "texture": "#tarp" },
+        "east": { "uv": [5, 5, 13, 9], "texture": "#tarp" },
+        "west": { "uv": [5, 5, 13, 9], "texture": "#tarp" },
+        "up": { "uv": [4, 5, 12, 13], "texture": "#tarp" }
+      }
+    },
+    {
+      "comment": "black tie strap",
+      "from": [7, 7.2, 4.8],
+      "to": [9, 11.2, 13.2],
+      "faces": {
+        "north": { "uv": [7, 5, 9, 9], "texture": "#strap" },
+        "south": { "uv": [7, 5, 9, 9], "texture": "#strap" },
+        "up": { "uv": [7, 5, 9, 13], "texture": "#strap" }
+      }
+    },
+    {
+      "comment": "loose stone pieces",
+      "from": [11, 1, 10],
+      "to": [15, 4, 14],
+      "faces": {
+        "north": { "uv": [11, 12, 15, 15], "texture": "#stone" },
+        "south": { "uv": [11, 12, 15, 15], "texture": "#stone" },
+        "east": { "uv": [10, 12, 14, 15], "texture": "#stone" },
+        "west": { "uv": [10, 12, 14, 15], "texture": "#stone" },
+        "up": { "uv": [11, 10, 15, 14], "texture": "#stone" }
+      }
+    }
+  ]
+}

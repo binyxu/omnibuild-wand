@@ -1,0 +1,65 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.16-SNAPSHOT'
+    id 'maven-publish'
+}
+
+version = '1.0.0+26.1.2'
+group = 'com.buildingwand'
+
+base {
+    archivesName = 'omnibuild-wand'
+}
+
+repositories {
+    maven { url 'https://maven.fabricmc.net/' }
+    maven { url 'https://maven.aliyun.com/repository/public' }
+    maven { url 'https://maven.aliyun.com/repository/central' }
+    mavenCentral()
+    // Local mods folder — provides litematica jar for compile-only access
+    flatDir { dirs "D:/Game/MC/HMCL-3.6.12/.minecraft/mods" }
+}
+
+loom {
+    splitEnvironmentSourceSets()
+    mods {
+        "buildingwand" {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:26.1.2"
+    implementation "net.fabricmc:fabric-loader:0.19.2"
+    implementation "net.fabricmc.fabric-api:fabric-api:0.150.0+26.1.2"
+    // Litematica: client-only optional dependency for schematic loading.
+    // At runtime the player must have litematica + malilib >=0.28.6 installed.
+    compileOnly files("D:/Game/MC/HMCL-3.6.12/.minecraft/mods/litematica-fabric-26.1.2-0.27.6.jar")
+    compileOnly files("D:/Game/MC/HMCL-3.6.12/.minecraft/mods/malilib-fabric-26.1.2-0.28.6.jar")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
+}
+
+processResources {
+    inputs.property 'version', version
+    filteringCharset 'UTF-8'
+    filesMatching('fabric.mod.json') {
+        expand 'version': version
+    }
+}
+
+jar {
+    from('LICENSE') {
+        rename { "${it}_${project.base.archivesName.get()}" }
+    }
+}

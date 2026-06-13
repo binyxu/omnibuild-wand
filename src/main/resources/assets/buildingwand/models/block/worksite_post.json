@@ -1,0 +1,34 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "post": "minecraft:block/stripped_oak_log",
+    "sign": "minecraft:block/oak_planks",
+    "particle": "minecraft:block/stripped_oak_log"
+  },
+  "elements": [
+    {
+      "comment": "wooden post",
+      "from": [7, 0, 7],
+      "to":   [9, 16, 9],
+      "faces": {
+        "north": { "uv": [7, 0, 9, 16], "texture": "#post" },
+        "south": { "uv": [7, 0, 9, 16], "texture": "#post" },
+        "east":  { "uv": [7, 0, 9, 16], "texture": "#post" },
+        "west":  { "uv": [7, 0, 9, 16], "texture": "#post" },
+        "up":    { "uv": [7, 7, 9,  9], "texture": "#post" },
+        "down":  { "uv": [7, 7, 9,  9], "texture": "#post" }
+      }
+    },
+    {
+      "comment": "sign board",
+      "from": [3, 9, 8],
+      "to":   [13, 15, 9],
+      "faces": {
+        "north": { "uv": [0, 0, 10, 6], "texture": "#sign" },
+        "south": { "uv": [0, 0, 10, 6], "texture": "#sign" },
+        "up":    { "uv": [0, 0, 10, 1], "texture": "#sign" },
+        "down":  { "uv": [0, 0, 10, 1], "texture": "#sign" }
+      }
+    }
+  ]
+}
