@@ -1152,12 +1152,19 @@ public class BuildingWandItem extends Item {
     public static boolean consumeBlock(Player player, BlockState state) {
         Item target = state.getBlock().asItem();
         if (target == Items.AIR) return false;
+        Inventory inv = player.getInventory();
         ItemStack off = player.getOffhandItem();
+        // Shulker boxes FIRST (carried bulk material), so loose hotbar stacks are spared.
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = inv.getItem(i);
+            if (isShulkerBox(stack) && consumeFromShulker(stack, target)) return true;
+        }
+        if (isShulkerBox(off) && consumeFromShulker(off, target)) return true;
+        // Then loose items: offhand -> hotbar -> main inventory.
         if (!off.isEmpty() && off.is(target)) {
             off.shrink(1);
             return true;
         }
-        Inventory inv = player.getInventory();
         for (int i = 0; i < 9; i++) {
             ItemStack stack = inv.getItem(i);
             if (!stack.isEmpty() && stack.is(target)) {
@@ -1172,11 +1179,7 @@ public class BuildingWandItem extends Item {
                 return true;
             }
         }
-        for (int i = 0; i < 36; i++) {
-            ItemStack stack = inv.getItem(i);
-            if (isShulkerBox(stack) && consumeFromShulker(stack, target)) return true;
-        }
-        return isShulkerBox(off) && consumeFromShulker(off, target);
+        return false;
     }
 
     private static boolean isShulkerBox(ItemStack stack) {

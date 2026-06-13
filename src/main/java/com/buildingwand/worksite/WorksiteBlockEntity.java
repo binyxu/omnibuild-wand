@@ -438,23 +438,7 @@ public class WorksiteBlockEntity {
         if (max <= 0) return 0;
         int taken = 0;
 
-        // Loose stacks of the target: always leave at least one behind in this container.
-        int looseTotal = 0;
-        for (int i = 0; i < container.getContainerSize(); i++) {
-            ItemStack stack = container.getItem(i);
-            if (!stack.isEmpty() && stack.is(target)) looseTotal += stack.getCount();
-        }
-        int looseToTake = Math.min(max, Math.max(0, looseTotal - 1));
-        for (int i = 0; i < container.getContainerSize() && looseToTake > 0; i++) {
-            ItemStack stack = container.getItem(i);
-            if (stack.isEmpty() || !stack.is(target)) continue;
-            int n = Math.min(looseToTake, stack.getCount());
-            container.removeItem(i, n);
-            taken += n;
-            looseToTake -= n;
-        }
-
-        // Shulker boxes inside the container: each one also keeps at least one behind.
+        // Shulker boxes inside the container FIRST (each keeps at least one behind).
         for (int i = 0; i < container.getContainerSize() && taken < max; i++) {
             ItemStack stack = container.getItem(i);
             if (!isShulkerItem(stack)) continue;
@@ -463,6 +447,22 @@ public class WorksiteBlockEntity {
                 taken += n;
                 container.setChanged();
             }
+        }
+
+        // Then loose stacks of the target: always leave at least one behind in this container.
+        int looseTotal = 0;
+        for (int i = 0; i < container.getContainerSize(); i++) {
+            ItemStack stack = container.getItem(i);
+            if (!isShulkerItem(stack) && !stack.isEmpty() && stack.is(target)) looseTotal += stack.getCount();
+        }
+        int looseToTake = Math.min(max - taken, Math.max(0, looseTotal - 1));
+        for (int i = 0; i < container.getContainerSize() && looseToTake > 0; i++) {
+            ItemStack stack = container.getItem(i);
+            if (isShulkerItem(stack) || stack.isEmpty() || !stack.is(target)) continue;
+            int n = Math.min(looseToTake, stack.getCount());
+            container.removeItem(i, n);
+            taken += n;
+            looseToTake -= n;
         }
         return taken;
     }
