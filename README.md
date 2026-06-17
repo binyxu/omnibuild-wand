@@ -1,4 +1,4 @@
-# OmniBuild Wand · 全能建造杖
+# OmniBuild Wand (Minecraft Mod) · 全能建造杖
 
 > 为**大规模建造**而生的 Fabric 建筑手杖。圈一片范围、囤好材料、一键量产。
 > *A Fabric building wand built for **large-scale construction** — select a region, stock the materials, mass-produce in one click.*
