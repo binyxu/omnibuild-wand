@@ -189,6 +189,21 @@ public class BuildingWandClient implements ClientModInitializer {
                             final String finalPath = path;
                             Minecraft.getInstance().execute(() -> loadSchematic(finalPath));
                             return 1;
+                        })))
+                .then(ClientCommands.literal("export")
+                    .executes(context -> {
+                        String name = "omnibuild_" + new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date());
+                        Minecraft.getInstance().execute(() -> exportSchematic(name));
+                        return 1;
+                    })
+                    .then(ClientCommands.argument("name", StringArgumentType.greedyString())
+                        .executes(context -> {
+                            String name = StringArgumentType.getString(context, "name").trim();
+                            if (name.length() > 1 && name.charAt(0) == '"' && name.charAt(name.length() - 1) == '"')
+                                name = name.substring(1, name.length() - 1);
+                            final String finalName = name;
+                            Minecraft.getInstance().execute(() -> exportSchematic(finalName));
+                            return 1;
                         })))));
 
         // ── Gizmo: show selection box in step-1 ───────────────────────────────
@@ -234,6 +249,44 @@ public class BuildingWandClient implements ClientModInitializer {
 
         } catch (Exception e) {
             mc.player.sendSystemMessage(Component.translatable("message.buildingwand.client.load_failed", e.getMessage()));
+        }
+    }
+
+    // ── /wand export [name] → save the wand's current clipboard as a .litematic ──
+
+    private static void exportSchematic(String name) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        ItemStack wand = BuildingWandItem.getHeldWand(mc.player);
+        if (wand == null) {
+            mc.player.sendSystemMessage(Component.translatable("message.buildingwand.wand_required"));
+            return;
+        }
+        CompoundTag tag = BuildingWandItem.getTag(wand);
+        ListTag clip = tag.getListOrEmpty(BuildingWandItem.K_CLIP);
+        // Big clips are stripped from the wand NBT and live only on the client.
+        if (clip.isEmpty()) clip = clientClipboard;
+        if (clip.isEmpty()) {
+            mc.player.sendSystemMessage(Component.translatable("message.buildingwand.export.empty"));
+            return;
+        }
+        try {
+            LitematicaSchematic schematic = schematicFromClip(clip, name, 0);
+            schematic.getMetadata().setAuthor(mc.player.getName().getString());
+            Path dir = DataManager.getSchematicsBaseDirectory();
+            boolean ok = schematic.writeToFile(dir, name, false);
+            if (ok) {
+                mc.player.sendSystemMessage(Component.translatable(
+                        "message.buildingwand.export.done", name, clip.size()));
+                mc.player.sendSystemMessage(Component.translatable(
+                        "message.buildingwand.export.path", dir.toString()));
+            } else {
+                mc.player.sendSystemMessage(Component.translatable(
+                        "message.buildingwand.export.failed", name));
+            }
+        } catch (Exception e) {
+            mc.player.sendSystemMessage(Component.translatable(
+                    "message.buildingwand.export.error", e.getMessage()));
         }
     }
 

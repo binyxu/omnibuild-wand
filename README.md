@@ -138,6 +138,16 @@ B · ·
 
 ![加载蓝图](docs/images/blueprint-load.png)
 
+## 📤 导出蓝图（分享给好友）
+
+把手杖里复制好的结构**导出成 `.litematic` 文件**，发给好友或上传分享：
+
+1. 在复制 / 移动模式下框选结构（或先用 `/wand load` 加载一个蓝图）。
+2. 输入 `/wand export <名字>`（不写名字会用时间戳自动命名）。
+3. 文件保存到 `.minecraft/schematics/`，把这个 `.litematic` 发给好友即可（好友用本手杖 `/wand load` 或 Litematica 都能打开）。
+
+> 导出的是结构的**原始朝向**；只记录方块本身，不含箱子里的物品 / 告示牌文字（与复制行为一致）。
+
 ## ⌨️ 按键速查
 
 | 按键 | 作用 |
@@ -150,6 +160,7 @@ B · ·
 | `V` | 方形 / 智能选区 切换 |
 | `/wand settings` | 打开设置（智能选区上限） |
 | `/wand load <path>` | 加载 Litematica 蓝图 |
+| `/wand export <名字>` | 导出当前结构为 .litematic 蓝图 |
 
 </details>
 
@@ -278,6 +289,16 @@ Turn an external `.litematic` schematic straight into a worksite:
 
 ![Load blueprint](docs/images/blueprint-load.png)
 
+## 📤 Export & Share
+
+Save the structure copied in your wand as a **`.litematic` file** to share with friends:
+
+1. Select a structure in Copy / Move mode (or load one first with `/wand load`).
+2. Run `/wand export <name>` (omit the name to auto-name it with a timestamp).
+3. The file is saved to `.minecraft/schematics/` — send that `.litematic` to friends (openable with this wand's `/wand load` or with Litematica).
+
+> Exports the structure in its original orientation; only block states are stored (no chest contents / sign text), matching Copy behavior.
+
 ## ⌨️ Controls cheat sheet
 
 | Key | Action |
@@ -290,6 +311,7 @@ Turn an external `.litematic` schematic straight into a worksite:
 | `V` | Toggle Box / Smart Selection |
 | `/wand settings` | Open settings (Smart Selection limits) |
 | `/wand load <path>` | Load a Litematica schematic |
+| `/wand export <name>` | Export current structure as a .litematic schematic |
 
 </details>
 
