@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '1.1.4+26.1.2'
+version = '1.2.0+26.2'
 group = 'com.buildingwand'
 
 base {
@@ -30,13 +30,13 @@ loom {
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:26.1.2"
-    implementation "net.fabricmc:fabric-loader:0.19.2"
-    implementation "net.fabricmc.fabric-api:fabric-api:0.150.0+26.1.2"
+    minecraft "com.mojang:minecraft:26.2"
+    implementation "net.fabricmc:fabric-loader:0.19.3"
+    implementation "net.fabricmc.fabric-api:fabric-api:0.152.2+26.2"
     // Litematica: client-only optional dependency for schematic loading.
-    // At runtime the player must have litematica + malilib >=0.28.6 installed.
-    compileOnly files("D:/Game/MC/HMCL-3.6.12/.minecraft/mods/litematica-fabric-26.1.2-0.27.6.jar")
-    compileOnly files("D:/Game/MC/HMCL-3.6.12/.minecraft/mods/malilib-fabric-26.1.2-0.28.6.jar")
+    // At runtime the player must have litematica + malilib >=0.29.0 installed.
+    compileOnly files("D:/Game/MC/HMCL-3.6.12/.minecraft/mods/litematica-fabric-26.2-0.28.0.jar")
+    compileOnly files("D:/Game/MC/HMCL-3.6.12/.minecraft/mods/malilib-fabric-26.2-0.29.0.jar")
 }
 
 java {

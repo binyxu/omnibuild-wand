@@ -60,7 +60,7 @@ public class BuildingWandSettingsScreen extends Screen {
                     BuildingWandConfig.setSmartScanLimit(smartScanLimit);
                     BuildingWandConfig.setSmartBlockLimit(smartBlockLimit);
                     BuildingWandConfig.save();
-                    Minecraft.getInstance().setScreen(null);
+                    Minecraft.getInstance().setScreenAndShow(null);
                 }).bounds(x0 + BG_WIDTH - 78, y0 + BG_HEIGHT - 28, 60, 20).build());
     }
 

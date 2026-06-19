@@ -153,8 +153,8 @@ public class BuildingWandClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(WorksiteClearPayload.TYPE, (payload, ctx) ->
                 ctx.client().execute(() -> {
                     removePlacement();
-                    if (ctx.client().screen instanceof WorksiteScreen) {
-                        ctx.client().setScreen(null);
+                    if (ctx.client().gui.screen() instanceof WorksiteScreen) {
+                        ctx.client().setScreenAndShow(null);
                     }
                 }));
 
@@ -177,7 +177,7 @@ public class BuildingWandClient implements ClientModInitializer {
                 .then(ClientCommands.literal("settings")
                     .executes(context -> {
                         Minecraft.getInstance().execute(() ->
-                                Minecraft.getInstance().setScreen(new BuildingWandSettingsScreen()));
+                                Minecraft.getInstance().setScreenAndShow(new BuildingWandSettingsScreen()));
                         return 1;
                     }))
                 .then(ClientCommands.literal("load")
@@ -429,7 +429,7 @@ public class BuildingWandClient implements ClientModInitializer {
         }
         addSelectionBox(gizmos, pos1, pos2, color);
         CameraRenderState cam = context.levelState().cameraRenderState;
-        gizmos.render(context.poseStack(), context.bufferSource(), cam, cam.projectionMatrix);
+        gizmos.submit(context.submitNodeCollector(), cam, false);
     }
 
     private static void addSmartSelection(DrawableGizmoPrimitives g, ListTag list, int color) {

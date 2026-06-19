@@ -6,7 +6,7 @@
 ![OmniBuild Wand](docs/images/worksite-building.png)
 
 <p align="center">
-<b>Minecraft 26.1.2 · Fabric</b> ·
+<b>Minecraft 26.2 · Fabric</b> ·
 <a href="https://modrinth.com/mod/omni-build-wand">Modrinth</a> ·
 必需依赖 / Required: <a href="https://modrinth.com/mod/fabric-api">Fabric API</a> · <a href="https://modrinth.com/mod/litematica">Litematica</a> · <a href="https://modrinth.com/mod/malilib">MaLiLib</a>
 </p>

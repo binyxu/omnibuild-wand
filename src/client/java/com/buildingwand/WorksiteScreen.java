@@ -267,10 +267,10 @@ public class WorksiteScreen extends Screen {
                                      Map<String, Integer> deposited, boolean building) {
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
-            if (mc.screen instanceof WorksiteScreen ws && ws.isFor(pos)) {
+            if (mc.gui.screen() instanceof WorksiteScreen ws && ws.isFor(pos)) {
                 ws.refresh(needed, deposited, building);
             } else {
-                mc.setScreen(new WorksiteScreen(pos, needed, deposited, building));
+                mc.setScreenAndShow(new WorksiteScreen(pos, needed, deposited, building));
             }
         });
     }
