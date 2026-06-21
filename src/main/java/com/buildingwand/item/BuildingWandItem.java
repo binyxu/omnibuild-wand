@@ -37,6 +37,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.server.level.ServerPlayer;
@@ -305,7 +306,7 @@ public class BuildingWandItem extends Item {
     }
 
     public static void serverToggleMode(ItemStack wand, Player player) {
-        int nm = (getMode(wand) + 1) % 5;
+        int nm = (getMode(wand) + 1) % 6;
         CompoundTag fresh = new CompoundTag();
         fresh.putInt(K_MODE, nm);
         fresh.putInt(K_SEL, getSel(wand));
@@ -316,22 +317,27 @@ public class BuildingWandItem extends Item {
             case 1 -> Component.translatable("message.buildingwand.mode.copy").withStyle(ChatFormatting.AQUA);
             case 2 -> Component.translatable("message.buildingwand.mode.replace").withStyle(ChatFormatting.LIGHT_PURPLE);
             case 3 -> Component.translatable("message.buildingwand.mode.move").withStyle(ChatFormatting.YELLOW);
-            default -> Component.translatable("message.buildingwand.mode.supply").withStyle(ChatFormatting.GOLD);
+            case 4 -> Component.translatable("message.buildingwand.mode.supply").withStyle(ChatFormatting.GOLD);
+            default -> Component.translatable("message.buildingwand.mode.harvest").withStyle(ChatFormatting.RED);
         }));
     }
 
     public static void serverToggleSelectionMode(ItemStack wand, Player player) {
         int mode = getMode(wand);
-        if (mode < 0 || mode > 3) return;
+        // Smart/box selection applies to fill, copy, replace, move and harvest — but not supply (4).
+        if (mode < 0 || mode > 5 || mode == 4) return;
         CompoundTag tag = getTag(wand);
-        int sel = tag.getIntOr(K_SEL, 0) == 0 ? 1 : 0;
+        int sel = (tag.getIntOr(K_SEL, 0) + 1) % 3; // 0=box -> 1=smart -> 2=chain -> 0
         CompoundTag fresh = new CompoundTag();
         fresh.putInt(K_MODE, mode);
         fresh.putInt(K_SEL, sel);
         saveTag(wand, fresh);
-        player.sendSystemMessage((sel == 0
-                ? Component.translatable("message.buildingwand.selection.box").withStyle(ChatFormatting.GRAY)
-                : Component.translatable("message.buildingwand.selection.smart").withStyle(ChatFormatting.GOLD)));
+        clearServerSmartSelection(player);
+        player.sendSystemMessage((switch (sel) {
+            case 0 -> Component.translatable("message.buildingwand.selection.box").withStyle(ChatFormatting.GRAY);
+            case 1 -> Component.translatable("message.buildingwand.selection.smart").withStyle(ChatFormatting.GOLD);
+            default -> Component.translatable("message.buildingwand.selection.chain").withStyle(ChatFormatting.GREEN);
+        }));
     }
 
     public static void serverCancelSelection(ItemStack wand, Player player) {
@@ -361,14 +367,15 @@ public class BuildingWandItem extends Item {
         else if (mode == 1) copyPasteModeClick(player, wand, clicked, face, step, level);
         else if (mode == 2) replaceModeClick(player, wand, clicked, step, level);
         else if (mode == 3) moveModeClick(player, wand, clicked, face, step, level);
-        else supplyLinkModeClick(player, wand, clicked, step, level);
+        else if (mode == 4) supplyLinkModeClick(player, wand, clicked, step, level);
+        else harvestModeClick(player, wand, clicked, step, level);
         return InteractionResult.SUCCESS;
     }
 
     private void fillModeClick(Player player, ItemStack wand, BlockPos clicked, int step, Level level) {
         if (step == 0) {
             if (getSel(wand) != 0) {
-                SelectionData selection = smartSelect(level, clicked);
+                SelectionData selection = selectStructure(wand, level, clicked);
                 if (selection == null) {
                     player.sendSystemMessage(Component.translatable("message.buildingwand.smart.failed"));
                     return;
@@ -419,20 +426,20 @@ public class BuildingWandItem extends Item {
             return;
         }
 
-        int airCount = 0;
+        int fillable = 0;
         for (int x = x1; x <= x2; x++) for (int y = y1; y <= y2; y++) for (int z = z1; z <= z2; z++) {
-            if (level.getBlockState(new BlockPos(x, y, z)).isAir()) airCount++;
+            if (canOverwrite(level.getBlockState(new BlockPos(x, y, z)))) fillable++;
         }
 
-        if (airCount == 0) {
+        if (fillable == 0) {
             player.sendSystemMessage(Component.translatable("message.buildingwand.fill.no_air"));
             return;
         }
         if (!player.isCreative()) {
             int have = countBlocks(player, fill);
-            if (have < airCount) {
+            if (have < fillable) {
                 player.sendSystemMessage(Component.translatable("message.buildingwand.materials.insufficient"));
-                player.sendSystemMessage(Component.translatable("message.buildingwand.materials.detail", fill.getBlock().getName(), airCount, have));
+                player.sendSystemMessage(Component.translatable("message.buildingwand.materials.detail", fill.getBlock().getName(), fillable, have));
                 return;
             }
         }
@@ -441,7 +448,7 @@ public class BuildingWandItem extends Item {
         outer:
         for (int x = x1; x <= x2; x++) for (int y = y1; y <= y2; y++) for (int z = z1; z <= z2; z++) {
             BlockPos bp = new BlockPos(x, y, z);
-            if (!level.getBlockState(bp).isAir()) continue;
+            if (!canOverwrite(level.getBlockState(bp))) continue;
             if (!player.isCreative() && !consumeBlock(player, fill)) break outer;
             level.setBlock(bp, fill, 3);
             placed++;
@@ -452,7 +459,7 @@ public class BuildingWandItem extends Item {
     private void replaceModeClick(Player player, ItemStack wand, BlockPos clicked, int step, Level level) {
         if (step == 0) {
             if (getSel(wand) != 0) {
-                SelectionData selection = smartSelect(level, clicked);
+                SelectionData selection = selectStructure(wand, level, clicked);
                 if (selection == null) {
                     player.sendSystemMessage(Component.translatable("message.buildingwand.smart.failed"));
                     return;
@@ -596,7 +603,7 @@ public class BuildingWandItem extends Item {
     private void moveModeClick(Player player, ItemStack wand, BlockPos clicked, Direction face, int step, Level level) {
         if (step == 0) {
             if (getSel(wand) != 0) {
-                SelectionData selection = smartSelect(level, clicked);
+                SelectionData selection = selectStructure(wand, level, clicked);
                 if (selection == null) {
                     player.sendSystemMessage(Component.translatable("message.buildingwand.smart.failed"));
                     return;
@@ -678,6 +685,113 @@ public class BuildingWandItem extends Item {
         }
     }
 
+    private void harvestModeClick(Player player, ItemStack wand, BlockPos clicked, int step, Level level) {
+        if (step == 0) {
+            if (getSel(wand) != 0) {
+                // Smart selection: outline the connected structure, then lock & wait for confirm.
+                SelectionData selection = selectStructure(wand, level, clicked);
+                if (selection == null) {
+                    player.sendSystemMessage(Component.translatable("message.buildingwand.smart.failed"));
+                    return;
+                }
+                storeSmartSelection(player, wand, selection);
+                setField(wand, K_STEP, 2);
+                player.sendSystemMessage(Component.translatable("message.buildingwand.harvest.smart_ready", selection.positions().size()));
+                return;
+            }
+            setPos1(wand, clicked);
+            setField(wand, K_STEP, 1);
+            player.sendSystemMessage(Component.translatable("message.buildingwand.harvest.corner1", fmt(clicked)));
+        } else if (step == 1) {
+            // Box selection: second corner only locks the range; a third click confirms.
+            setPos2(wand, clicked);
+            setField(wand, K_STEP, 2);
+            player.sendSystemMessage(Component.translatable("message.buildingwand.harvest.range_ready", fmt(getPos1(wand)), fmt(clicked)));
+        } else {
+            // Confirm click: mine the locked selection.
+            if (getSel(wand) != 0) doHarvestSmart(player, level, readSmartPositions(player, wand));
+            else doHarvest(player, level, getPos1(wand), getPos2(wand));
+            resetStep(wand);
+        }
+    }
+
+    private void doHarvest(Player player, Level level, BlockPos pos1, BlockPos pos2) {
+        long vol = calcVol(pos1, pos2);
+        if (vol > MAX_BLOCKS) {
+            player.sendSystemMessage(Component.translatable("message.buildingwand.region_too_large", vol, MAX_BLOCKS));
+            return;
+        }
+        int x1 = Math.min(pos1.getX(), pos2.getX()), x2 = Math.max(pos1.getX(), pos2.getX());
+        int y1 = Math.min(pos1.getY(), pos2.getY()), y2 = Math.max(pos1.getY(), pos2.getY());
+        int z1 = Math.min(pos1.getZ(), pos2.getZ()), z2 = Math.max(pos1.getZ(), pos2.getZ());
+        List<BlockPos> positions = new ArrayList<>();
+        for (int x = x1; x <= x2; x++) for (int y = y1; y <= y2; y++) for (int z = z1; z <= z2; z++) {
+            positions.add(new BlockPos(x, y, z));
+        }
+        harvestRegion(player, level, positions);
+    }
+
+    private void doHarvestSmart(Player player, Level level, List<BlockPos> positions) {
+        harvestRegion(player, level, positions);
+    }
+
+    /**
+     * Mine the given blocks using the player's OFFHAND tool, so all tool enchantments
+     * (Fortune, Silk Touch, Unbreaking) apply exactly as if mined by hand. Requires a damageable
+     * tool in the offhand; stops early — mid-region — once that tool is down to its last point of
+     * durability so the wand never snaps the tool.
+     */
+    private void harvestRegion(Player player, Level level, List<BlockPos> positions) {
+        if (!(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+        ItemStack tool = player.getOffhandItem();
+        if (tool.isEmpty() || !tool.isDamageableItem()) {
+            player.sendSystemMessage(Component.translatable("message.buildingwand.harvest.no_tool"));
+            return;
+        }
+
+        int broken = 0;
+        boolean toolSpent = false;
+        for (BlockPos bp : positions) {
+            BlockState state = level.getBlockState(bp);
+            if (state.isAir()) continue;
+            if (state.getDestroySpeed(level, bp) < 0) continue; // bedrock & other unbreakable
+            // Stop while the tool still has one point of durability left (it may leave a region half-harvested).
+            if (tool.getMaxDamage() - tool.getDamageValue() <= 1) { toolSpent = true; break; }
+            harvestOne(serverLevel, player, tool, bp, state);
+            broken++;
+        }
+
+        if (broken == 0 && !toolSpent) {
+            player.sendSystemMessage(Component.translatable("message.buildingwand.harvest.empty"));
+            return;
+        }
+        player.sendSystemMessage(Component.translatable("message.buildingwand.harvest.done", broken));
+        if (toolSpent) {
+            player.sendSystemMessage(Component.translatable("message.buildingwand.harvest.tool_spent"));
+        }
+    }
+
+    private void harvestOne(net.minecraft.server.level.ServerLevel level, Player player, ItemStack tool, BlockPos pos, BlockState state) {
+        BlockEntity be = level.getBlockEntity(pos);
+        // Drops are computed with the offhand tool so Fortune/Silk Touch are honored.
+        if (!player.isCreative()) {
+            for (ItemStack drop : Block.getDrops(state, level, pos, be, player, tool)) {
+                if (drop.isEmpty()) continue;
+                ItemStack copy = drop.copy();
+                if (!player.getInventory().add(copy)) player.drop(copy, false);
+            }
+        }
+        level.addDestroyBlockEffect(pos, state); // break particles + sound
+        level.removeBlock(pos, false);
+        // Apply mining wear to the tool (respects Unbreaking; instant-break blocks cost nothing).
+        tool.mineBlock(level, state, pos, player);
+    }
+
+    /** A position the wand may build into: air, or a replaceable block such as grass, water or snow. */
+    private static boolean canOverwrite(BlockState state) {
+        return state.canBeReplaced();
+    }
+
     private List<BlockPos> scanContainers(net.minecraft.server.level.ServerLevel level, BlockPos a, BlockPos b) {
         if (calcVol(a, b) > MAX_SUPPLY_SCAN) return null;
         int x1 = Math.min(a.getX(), b.getX()), x2 = Math.max(a.getX(), b.getX());
@@ -697,7 +811,7 @@ public class BuildingWandItem extends Item {
     private void copyPasteModeClick(Player player, ItemStack wand, BlockPos clicked, Direction face, int step, Level level) {
         if (step == 0) {
             if (getSel(wand) != 0) {
-                SelectionData selection = smartSelect(level, clicked);
+                SelectionData selection = selectStructure(wand, level, clicked);
                 if (selection == null) {
                     player.sendSystemMessage(Component.translatable("message.buildingwand.smart.failed"));
                     return;
@@ -838,7 +952,7 @@ public class BuildingWandItem extends Item {
         for (PlacementEntry en : entries) {
             BlockState existing = level.getBlockState(en.target());
             if (en.state().isAir()) continue;
-            if (!existing.isAir()) continue;
+            if (!canOverwrite(existing)) continue;
             if (!player.isCreative() && !consumeBlock(player, en.state())) continue;
             level.setBlock(en.target(), en.state(), PLACE_FLAGS);
             placedPositions.add(en.target());
@@ -893,7 +1007,7 @@ public class BuildingWandItem extends Item {
             sourceToTarget.put(sourcePos, entry.target());
             if (entry.state().isAir()) continue;
             BlockState existing = level.getBlockState(entry.target());
-            if (!existing.isAir() && !sourcePositions.contains(entry.target())) blockedTargets.add(entry.target());
+            if (!canOverwrite(existing) && !sourcePositions.contains(entry.target())) blockedTargets.add(entry.target());
         }
 
         for (BlockPos sourcePos : sourceOnly) {
@@ -913,7 +1027,7 @@ public class BuildingWandItem extends Item {
         for (PlacementEntry entry : entries) {
             if (entry.state().isAir()) continue;
             if (blockedTargets.contains(entry.target())) continue;
-            if (!level.getBlockState(entry.target()).isAir() && !sourcePositions.contains(entry.target())) continue;
+            if (!canOverwrite(level.getBlockState(entry.target())) && !sourcePositions.contains(entry.target())) continue;
             level.setBlock(entry.target(), entry.state(), PLACE_FLAGS);
             placedPositions.add(entry.target());
             moved++;
@@ -1010,6 +1124,61 @@ public class BuildingWandItem extends Item {
 
     private boolean isMovable(BlockState state, Level level, BlockPos pos) {
         return state.getDestroySpeed(level, pos) >= 0 && !IMMOVABLE_BLOCKS.contains(state.getBlock());
+    }
+
+    /** Pick the structure-selection strategy based on the wand's selection mode (1=smart, 2=chain). */
+    private SelectionData selectStructure(ItemStack wand, Level level, BlockPos clicked) {
+        return getSel(wand) == 2 ? chainSelect(level, clicked) : smartSelect(level, clicked);
+    }
+
+    /**
+     * Chain (vein) selection: flood-fill outward through blocks of the SAME type as the clicked one,
+     * in all 26 directions (so diagonal ore veins connect). Capped by the same scan/block limits as
+     * smart selection to prevent runaway selections (e.g. clicking into a huge stone mass).
+     * Returns null if the target is air or the connected mass exceeds the limits.
+     */
+    private SelectionData chainSelect(Level level, BlockPos clicked) {
+        BlockState anchor = level.getBlockState(clicked);
+        if (anchor.isAir()) return null;
+        Block anchorBlock = anchor.getBlock();
+
+        ArrayDeque<BlockPos> queue = new ArrayDeque<>();
+        Set<Long> visited = new HashSet<>();
+        List<BlockPos> positions = new ArrayList<>();
+        queue.add(clicked);
+
+        int minX = clicked.getX(), minY = clicked.getY(), minZ = clicked.getZ();
+        int maxX = clicked.getX(), maxY = clicked.getY(), maxZ = clicked.getZ();
+        int scanned = 0;
+
+        while (!queue.isEmpty()) {
+            BlockPos pos = queue.removeFirst();
+            if (!visited.add(pos.asLong())) continue;
+            if (level.getBlockState(pos).getBlock() != anchorBlock) continue;
+
+            scanned++;
+            if (scanned > BuildingWandConfig.smartScanLimit()) return null;
+            positions.add(pos);
+            if (positions.size() > BuildingWandConfig.smartBlockLimit()) return null;
+
+            minX = Math.min(minX, pos.getX());
+            minY = Math.min(minY, pos.getY());
+            minZ = Math.min(minZ, pos.getZ());
+            maxX = Math.max(maxX, pos.getX());
+            maxY = Math.max(maxY, pos.getY());
+            maxZ = Math.max(maxZ, pos.getZ());
+
+            for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) for (int dz = -1; dz <= 1; dz++) {
+                if (dx == 0 && dy == 0 && dz == 0) continue;
+                BlockPos next = pos.offset(dx, dy, dz);
+                if (visited.contains(next.asLong())) continue;
+                if (level.getBlockState(next).getBlock() != anchorBlock) continue;
+                queue.addLast(next);
+            }
+        }
+
+        if (positions.isEmpty()) return null;
+        return new SelectionData(new BlockPos(minX, minY, minZ), new BlockPos(maxX, maxY, maxZ), positions);
     }
 
     private SelectionData smartSelect(Level level, BlockPos clicked) {
@@ -1247,9 +1416,12 @@ public class BuildingWandItem extends Item {
          } else if (mode == 3) {
             tips.accept(Component.translatable("tooltip.buildingwand.mode.move").withStyle(ChatFormatting.ITALIC));
             tips.accept(Component.translatable("tooltip.buildingwand.move.hint").withStyle(ChatFormatting.ITALIC));
-         } else {
+         } else if (mode == 4) {
             tips.accept(Component.translatable("tooltip.buildingwand.mode.supply").withStyle(ChatFormatting.ITALIC));
             tips.accept(Component.translatable("tooltip.buildingwand.supply.hint").withStyle(ChatFormatting.ITALIC));
+         } else {
+            tips.accept(Component.translatable("tooltip.buildingwand.mode.harvest").withStyle(ChatFormatting.ITALIC));
+            tips.accept(Component.translatable("tooltip.buildingwand.harvest.hint").withStyle(ChatFormatting.ITALIC));
         }
         tips.accept(Component.translatable("tooltip.buildingwand.common.controls").withStyle(ChatFormatting.ITALIC));
     }

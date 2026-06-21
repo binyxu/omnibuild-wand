@@ -59,6 +59,7 @@ public class BuildingWandClient implements ClientModInitializer {
     private static final int COLOR_SEL_COPY = 0xCC00EEFF;
     private static final int COLOR_SEL_REPLACE = 0xCCFF55FF;
     private static final int COLOR_SEL_MOVE = 0xCC55FF88;
+    private static final int COLOR_SEL_HARVEST = 0xCCFF3333;
 
     // ── Litematica state ──────────────────────────────────────────────────────
     private static LitematicaSchematic currentSchematic = null;
@@ -462,20 +463,20 @@ public class BuildingWandClient implements ClientModInitializer {
         if ((step != 1 && step != 2) || !(mc.hitResult instanceof BlockHitResult bhr)) return;
         int mode = BuildingWandItem.getMode(wand);
         int sel = BuildingWandItem.getSel(wand);
-        if (step == 2 && mode != 2 && sel == 0) return;
+        if (step == 2 && mode != 2 && mode != 5 && sel == 0) return;
         CompoundTag tag = BuildingWandItem.getTag(wand);
         BlockPos pos1 = new BlockPos(
                 tag.getIntOr(BuildingWandItem.K_P1X, 0),
                 tag.getIntOr(BuildingWandItem.K_P1Y, 0),
                 tag.getIntOr(BuildingWandItem.K_P1Z, 0));
-        boolean useStoredBounds = sel != 0 || (step == 2 && mode == 2);
+        boolean useStoredBounds = sel != 0 || (step == 2 && (mode == 2 || mode == 5));
         BlockPos pos2 = useStoredBounds
                 ? new BlockPos(
                 tag.getIntOr(BuildingWandItem.K_P2X, 0),
                 tag.getIntOr(BuildingWandItem.K_P2Y, 0),
                 tag.getIntOr(BuildingWandItem.K_P2Z, 0))
                 : bhr.getBlockPos();
-        int color = mode == 0 ? COLOR_SEL_FILL : (mode == 1 ? COLOR_SEL_COPY : (mode == 2 ? COLOR_SEL_REPLACE : COLOR_SEL_MOVE));
+        int color = mode == 0 ? COLOR_SEL_FILL : (mode == 1 ? COLOR_SEL_COPY : (mode == 2 ? COLOR_SEL_REPLACE : (mode == 5 ? COLOR_SEL_HARVEST : COLOR_SEL_MOVE)));
         DrawableGizmoPrimitives gizmos = new DrawableGizmoPrimitives();
         if (sel != 0 && tag.getListOrEmpty(BuildingWandItem.K_SMART).size() > 0) {
             addSmartSelection(gizmos, tag.getListOrEmpty(BuildingWandItem.K_SMART), color);

@@ -41,8 +41,8 @@ B · ·
 ## 🎮 基础概念
 
 - **手持手杖右键**＝选角 / 执行操作。大多数操作是「右键选第一个角 → 再右键选第二个角 → 完成」。
-- 按 **`N`** 在五种模式间循环切换：**填充 → 复制/粘贴 → 替换 → 移动 → 供料链接**。
-- 按 **`V`** 在 **方形选区 ↔ 智能选区** 间切换。
+- 按 **`N`** 在六种模式间循环切换：**填充 → 复制/粘贴 → 替换 → 移动 → 供料链接 → 采集**。
+- 按 **`V`** 在 **方形 → 智能 → 连锁选区** 间循环切换。
 - **`Shift` + 右键**＝重置当前选区，重新开始。
 - 生存模式会**真实扣除背包材料**（可从快捷栏或副手的**潜影盒**里取）；材料不够时可改用「工地」慢慢囤料建造（见下文）。
 
@@ -50,10 +50,12 @@ B · ·
 
 ## 🟦 填充模式 Fill
 
-把一个长方体范围内的空气填成你指定的方块。
+把一个长方体范围内的空位填成你指定的方块。
 
 1. 把要填充的方块放进**副手或快捷栏**。
-2. 右键点第一个角 → 右键点对角，范围内的空气立即填满。
+2. 右键点第一个角 → 右键点对角，范围内的**空位立即填满**。
+
+> 「空位」不只是空气：草、海草、水、岩浆、雪层等**可被覆盖的方块**都会被一并填上（凡是右键能直接放方块的位置都算）。
 
 ![填充模式](docs/images/fill.png)
 
@@ -97,6 +99,14 @@ B · ·
 ![智能选区](docs/images/smart-selection.png)
 
 > 扫描 / 方块上限可在 `/wand settings` 里调（默认扫描 80,000 格、最多选中 25,000 方块）。
+
+## ⛓️ 连锁选区 Chain Selection
+
+再按一次 **`V`** 切到**连锁选区**：右键一个方块，只会沿**同种方块**蔓延选取（26 方向连通，斜着相邻也算），同样是「右键圈选 → 锁定 → 再右键确认」。
+
+- 点**原木**只选连通的原木（不带树叶）、点**矿石**只选同种矿脉、点**石头**只选连通石头。
+- 与智能选区共用同一套上限，超出即失败，不会爆炸。
+- 配合**采集模式**就是「连锁伐木 / 连锁挖矿」；用在复制 / 移动上则能只挑出同种方块。
 
 ---
 
@@ -148,6 +158,18 @@ B · ·
 
 > 导出的是结构的**原始朝向**；只记录方块本身，不含箱子里的物品 / 告示牌文字（与复制行为一致）。
 
+## ⛏️ 采集模式 Harvest（用副手工具批量采集）
+
+把一片范围里的方块**用副手的工具**一次性采下来——相当于让工具替你挖矿、伐木、清地基，且**正常触发工具的全部附魔**（时运、精准采集、耐久附魔都生效）。
+
+1. 按 `N` 切到 **采集** 模式（红字），主手拿手杖、**副手放一把工具**（镐 / 斧 / 锹 / 剪刀…）。
+2. 用**方形 / 智能 / 连锁**任一种选区框出范围（按 `V` 切换）。
+3. 锁定后**再右键确认**，即用副手那把工具把范围内的方块全部采下，掉落物直接进背包。
+
+> ⚠️ 副手**必须**是可损耗的工具，否则报错返回。
+> 🛡️ 当工具**耐久只剩 1 点时自动停手**（此时可能是采了一半的状态），绝不会把工具挖断——换把工具再来一次即可。
+> 掉落严格按工具与附魔结算：拿错工具（如用锹挖石头）不掉落，精准采集得方块本体，时运提高产量。
+
 ## ⌨️ 按键速查
 
 | 按键 | 作用 |
@@ -156,8 +178,8 @@ B · ·
 | `Shift` + 右键 | 重置选区 |
 | `R` | 旋转 |
 | `B` | 镜像 |
-| `N` | 切换模式（填充/复制/替换/移动/供料链接） |
-| `V` | 方形 / 智能选区 切换 |
+| `N` | 切换模式（填充/复制/替换/移动/供料链接/采集） |
+| `V` | 方形 / 智能 / 连锁选区 循环切换 |
 | `/wand settings` | 打开设置（智能选区上限） |
 | `/wand load <path>` | 加载 Litematica 蓝图 |
 | `/wand export <名字>` | 导出当前结构为 .litematic 蓝图 |
@@ -192,8 +214,8 @@ B · ·
 ## 🎮 Core concepts
 
 - **Right-click with the wand** = pick a corner / execute. Most actions are *right-click corner 1 → right-click corner 2 → done*.
-- Press **`N`** to cycle the five modes: **Fill → Copy/Paste → Replace → Move → Supply Link**.
-- Press **`V`** to toggle **Box ↔ Smart Selection**.
+- Press **`N`** to cycle the six modes: **Fill → Copy/Paste → Replace → Move → Supply Link → Harvest**.
+- Press **`V`** to cycle **Box → Smart → Chain Selection**.
 - **`Shift` + Right-click** = reset the current selection.
 - In Survival it **actually consumes materials** from your hotbar/offhand (including **shulker boxes**). Short on materials? Build it as a *worksite* instead (see below).
 
@@ -201,10 +223,12 @@ B · ·
 
 ## 🟦 Fill Mode
 
-Fill all air in a box region with a chosen block.
+Fill every open spot in a box region with a chosen block.
 
 1. Put the fill block in your **offhand or hotbar**.
-2. Right-click corner 1 → right-click the opposite corner. The air fills instantly.
+2. Right-click corner 1 → right-click the opposite corner. The open spots fill instantly.
+
+> "Open" isn't just air: grass, seagrass, water, lava, snow layers and other **replaceable blocks** all get filled over too (anywhere you could right-click to place a block).
 
 ![Fill](docs/images/fill.png)
 
@@ -248,6 +272,14 @@ Don't want to click corners? Press **`V`** for Smart Selection: right-click one 
 ![Smart Selection](docs/images/smart-selection.png)
 
 > Tune the scan / block limits in `/wand settings` (defaults: 80,000-cell scan, 25,000 blocks max).
+
+## ⛓️ Chain Selection
+
+Press **`V`** once more for **Chain Selection**: right-click a block and it spreads only through **blocks of the same type** (26-direction connectivity, so diagonal touches count too) — same lock-then-confirm flow.
+
+- Click a **log** → only the connected logs (no leaves); click an **ore** → just that vein; click **stone** → only connected stone.
+- Shares the same limits as Smart Selection, so it fails rather than exploding.
+- With **Harvest mode** this becomes "chain-chop / vein-mine"; with Copy / Move it cherry-picks one block type.
 
 ---
 
@@ -299,6 +331,18 @@ Save the structure copied in your wand as a **`.litematic` file** to share with 
 
 > Exports the structure in its original orientation; only block states are stored (no chest contents / sign text), matching Copy behavior.
 
+## ⛏️ Harvest Mode (bulk-mine with your offhand tool)
+
+Mine a whole region **using the tool in your offhand** — let it dig, fell trees or clear foundations for you, with **all of the tool's enchantments applying** (Fortune, Silk Touch, Unbreaking all work).
+
+1. Press `N` to switch to **Harvest** mode (red), hold the wand in your main hand and **a tool in your offhand** (pickaxe / axe / shovel / shears…).
+2. Select a region with **Box / Smart / Chain** selection (`V` to switch).
+3. Once locked, **right-click again to confirm** — the offhand tool mines everything in range, drops go straight to your inventory.
+
+> ⚠️ The offhand **must** hold a damageable tool, otherwise it errors out.
+> 🛡️ It **stops automatically when the tool is down to its last durability point** (which may leave a region half-harvested) — it will never snap your tool. Swap in a fresh tool and run it again.
+> Drops follow the tool & its enchantments exactly: wrong tool (e.g. shovel on stone) yields nothing, Silk Touch gives the block itself, Fortune boosts yield.
+
 ## ⌨️ Controls cheat sheet
 
 | Key | Action |
@@ -307,8 +351,8 @@ Save the structure copied in your wand as a **`.litematic` file** to share with 
 | `Shift` + Right-click | Reset selection |
 | `R` | Rotate |
 | `B` | Flip |
-| `N` | Switch mode (Fill/Copy/Replace/Move/Supply Link) |
-| `V` | Toggle Box / Smart Selection |
+| `N` | Switch mode (Fill/Copy/Replace/Move/Supply Link/Harvest) |
+| `V` | Cycle Box / Smart / Chain Selection |
 | `/wand settings` | Open settings (Smart Selection limits) |
 | `/wand load <path>` | Load a Litematica schematic |
 | `/wand export <name>` | Export current structure as a .litematic schematic |
